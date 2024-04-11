@@ -34,12 +34,12 @@ _LICENSE = "The dataset should be used for educational and research purposes onl
 
 _URLS = {
     "split": {
-        "train": "data/train.jsonl.gz",
-        "validation": "data/validation.jsonl.gz",
-        "test": "data/test.jsonl.gz",
+        "train": "Data/train.jsonl.gz",
+        "validation": "Data/validation.jsonl.gz",
+        "test": "Data/test.jsonl.gz",
     },
     "unsplit": {
-        "train": "data/data.jsonl.gz",
+        "train": "Data/data.jsonl.gz",
     },
 }
 
@@ -48,9 +48,13 @@ class Emotion(datasets.GeneratorBasedBuilder):
     VERSION = datasets.Version("1.0.0")
     BUILDER_CONFIGS = [
         datasets.BuilderConfig(
-            name="split", version=VERSION, description="Dataset split in train, validation and test"
+            name="split",
+            version=VERSION,
+            description="Dataset split in train, validation and test",
         ),
-        datasets.BuilderConfig(name="unsplit", version=VERSION, description="Unsplit dataset"),
+        datasets.BuilderConfig(
+            name="unsplit", version=VERSION, description="Unsplit dataset"
+        ),
     ]
     DEFAULT_CONFIG_NAME = "split"
 
@@ -59,13 +63,18 @@ class Emotion(datasets.GeneratorBasedBuilder):
         return datasets.DatasetInfo(
             description=_DESCRIPTION,
             features=datasets.Features(
-                {"text": datasets.Value("string"), "label": datasets.ClassLabel(names=class_names)}
+                {
+                    "text": datasets.Value("string"),
+                    "label": datasets.ClassLabel(names=class_names),
+                }
             ),
             supervised_keys=("text", "label"),
             homepage=_HOMEPAGE,
             citation=_CITATION,
             license=_LICENSE,
-            task_templates=[TextClassification(text_column="text", label_column="label")],
+            task_templates=[
+                TextClassification(text_column="text", label_column="label")
+            ],
         )
 
     def _split_generators(self, dl_manager):
@@ -73,12 +82,23 @@ class Emotion(datasets.GeneratorBasedBuilder):
         paths = dl_manager.download_and_extract(_URLS[self.config.name])
         if self.config.name == "split":
             return [
-                datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={"filepath": paths["train"]}),
-                datasets.SplitGenerator(name=datasets.Split.VALIDATION, gen_kwargs={"filepath": paths["validation"]}),
-                datasets.SplitGenerator(name=datasets.Split.TEST, gen_kwargs={"filepath": paths["test"]}),
+                datasets.SplitGenerator(
+                    name=datasets.Split.TRAIN, gen_kwargs={"filepath": paths["train"]}
+                ),
+                datasets.SplitGenerator(
+                    name=datasets.Split.VALIDATION,
+                    gen_kwargs={"filepath": paths["validation"]},
+                ),
+                datasets.SplitGenerator(
+                    name=datasets.Split.TEST, gen_kwargs={"filepath": paths["test"]}
+                ),
             ]
         else:
-            return [datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={"filepath": paths["train"]})]
+            return [
+                datasets.SplitGenerator(
+                    name=datasets.Split.TRAIN, gen_kwargs={"filepath": paths["train"]}
+                )
+            ]
 
     def _generate_examples(self, filepath):
         """Generate examples."""
