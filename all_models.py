@@ -8,7 +8,7 @@ These are the optimal models for each Machine Learning Algorithm, for detailed i
 # Multi-Layer-Perceptron
 def mlp():
 
-    return None
+    return y_pred, loss
 
 
 def svm():
