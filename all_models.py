@@ -90,7 +90,7 @@ def svm():
 def logistic_regression():
 
     # Load the train and test data (already preprocessed).
-    print("Loading the data")
+    print("Logistic Regression: Loading data")
     train_data = pd.read_csv("train_data.csv")
     X_train_raw = train_data["X_train"].tolist()
     y_train = train_data["y_train"].tolist()
@@ -125,13 +125,13 @@ def logistic_regression():
     X_train = vectorizer.fit_transform(train_str).toarray()
     test_bow = vectorizer.transform(test_str).toarray()
 
-    print("Initializing the Logistic Regression Model")
+    print("Logistic Regression: Initializing model")
     # Initialize the optimal Logistic Regression model using the following hyperparameters.
     # Using max_iter = 500, C = 100, penalty = l1, and solver = liblinear.
     logReg = LogisticRegression(max_iter=500, C=100, penalty="l1", solver="liblinear")
     logReg.fit(X_train, y_train)
 
-    print("Making the predictions")
+    print("Logistic Regression: Making predictions")
     y_pred = logReg.predict(test_bow)
 
     # Losses
@@ -145,7 +145,7 @@ def logistic_regression():
     )
     losses = []
 
-    print("Calculating the losses")
+    print("Logistic Regression: Calculating losses")
     # Train the model for 10 epochs.
     for _ in range(10):
         loss_model.partial_fit(X_train, y_train, classes=np.unique(y_train))
