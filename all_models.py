@@ -21,6 +21,7 @@ def svm():
     return None
 
 
+# Logistic Regression
 def logistic_regression():
     
     # Load the train and test data (already preprocessed).
