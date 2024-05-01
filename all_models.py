@@ -197,10 +197,29 @@ def naive_bayes():
             self.vocab = set()
 
         def train(self, X, y):
-            # ...
+            for i in range(len(X)):
+            tokens = X[i]
+            emotion = y[i]
+            self.class_counts[emotion] += 1
+            for token in tokens:
+                self.word_counts[emotion][token] += 1
+                self.vocab.add(token)
 
         def predict(self, X):
-            # ...
+            predictions = []
+        for i, tokens in enumerate(X):
+            if i % 100 == 0:
+                print("Processing instance", i+1, "of", len(X))
+            emotion_log_probs = []
+            for emotion in self.class_counts:
+                log_prob = np.log(self.class_counts[emotion] / sum(self.class_counts.values()))
+                denominator = sum(self.word_counts[emotion].values()) + len(self.vocab)
+                log_prob += sum(np.log((self.word_counts[emotion][token] + 1) / denominator) for token in tokens)
+                emotion_log_probs.append(log_prob)
+            max_idx = np.argmax(emotion_log_probs)
+            pred_emotion = list(self.class_counts.keys())[max_idx]
+            predictions.append(pred_emotion)
+        return predictions
 
     # Create Naive Bayes Classifier instance
     classifier = NaiveBayesClassifier()
@@ -215,36 +234,8 @@ def naive_bayes():
     accuracy = sum(1 for pred, true in zip(predictions, y_test) if pred == true) / len(y_test)
     print("Accuracy:", accuracy)
 
-    # Compute the confusion matrix
-    conf_matrix = confusion_matrix(y_test, predictions)
-    print("Confusion Matrix:")
-    print(conf_matrix)
 
-    # Convert labels to binary format
-    y_test_bin = label_binarize(y_test, classes=np.unique(y_test))
-
-    # Compute precision, recall, and thresholds for each class
-    precisions = dict()
-    recalls = dict()
-    thresholds = dict()
-    for i, emotion in enumerate(np.unique(y_test)):
-        precision, recall, threshold = precision_recall_curve(y_test_bin[:, i], predictions == emotion, pos_label=True)
-        precisions[emotion] = precision
-        recalls[emotion] = recall
-        thresholds[emotion] = threshold
-
-    # Plot precision-recall curve for each class
-    plt.figure()
-    for i, emotion in enumerate(np.unique(y_test)):
-        if emotion in precisions and emotion in recalls:
-            plt.step(recalls[emotion], precisions[emotion], where='post', label=f'Class {emotion}')
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Precision-Recall Curve for the Naive Bayes Classifier')
-    plt.legend()
-    plt.show()
-
-    return predictions, accuracy, conf_matrix
+    return predictions, accuracy
     #Call the naive_bayes function with the code line 'predictions, accuracy, conf_matrix = naive_bayes()'
     
 
