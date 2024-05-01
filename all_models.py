@@ -232,7 +232,7 @@ def naive_bayes():
 
     # Evaluate the accuracy of the classifier
     accuracy = sum(1 for pred, true in zip(predictions, y_test) if pred == true) / len(y_test)
-    print("Accuracy:", accuracy)
+    #print("Accuracy:", accuracy)
 
 
     return predictions, accuracy
@@ -377,30 +377,30 @@ def decision_tree():
 
     # Evaluate the accuracy of the classifier
     accuracy = sum(1 for pred, true in zip(predictions, y_test) if pred == true) / len(y_test)
-    print("Final Accuracy of the model:", accuracy)
+    #print("Final Accuracy of the model:", accuracy)
 
     # Calculate confusion matrix
     cm = confusion_matrix(y_test, predictions)
-    print("Confusion Matrix of Decision Tree:")
-    print(cm)
+    #print("Confusion Matrix of Decision Tree:")
+    #print(cm)
 
     # Calculate training loss
     train_predictions = classifier.predict(X_train_bow.toarray())
     train_loss = sum(1 for pred, true in zip(train_predictions, y_train) if pred != true) / len(y_train)
-    print("Training Loss:", train_loss)
+    #print("Training Loss:", train_loss)
 
     # Plot the training loss curve
-    train_losses = [1 if pred != true else 0 for pred, true in zip(train_predictions, y_train)]
-    plt.plot(range(len(train_losses)), train_losses)
-    plt.xlabel('Iteration')
-    plt.ylabel('Training Loss')
-    plt.title('Training Loss Curve for Decision Tree')
-    plt.show()
+    #train_losses = [1 if pred != true else 0 for pred, true in zip(train_predictions, y_train)]
+    #plt.plot(range(len(train_losses)), train_losses)
+    #plt.xlabel('Iteration')
+    #plt.ylabel('Training Loss')
+    #plt.title('Training Loss Curve for Decision Tree')
+    #plt.show()
 
     # Display the classification report
     classification_rep = classification_report(y_test, predictions)
-    print("Classification Report:")
-    print(classification_rep)
+    #print("Classification Report:")
+    #print(classification_rep)
 
     return predictions, train_losses
     # Call the decision_tree function with the code line 'predictions, train_losses = decision_tree()'
