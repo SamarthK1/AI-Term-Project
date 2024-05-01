@@ -165,8 +165,86 @@ def logistic_regression():
 
 
 def naive_bayes():
+    # Load training data
+    train_data = pd.read_csv("train_data.csv")
+    X_train = train_data['X_train'].tolist()
+    y_train = train_data['y_train'].tolist()
 
-    return None
+    # Load test data
+    test_data = pd.read_csv("test_data.csv")
+    X_test = test_data['X_test'].tolist()
+    y_test = test_data['y_test'].tolist()
+
+    # Tokenization
+    X_train_raw = [ast.literal_eval(item) if isinstance(item, str) else item for item in X_train]
+    X_test_raw = [ast.literal_eval(item) if isinstance(item, str) else item for item in X_test]
+
+    # Convert tokenized texts to strings for CountVectorizer
+    X_train_texts = [' '.join(tokens) for tokens in X_train_raw]
+    X_test_texts = [' '.join(tokens) for tokens in X_test_raw]
+
+    # Create CountVectorizer and limit vocabulary to the top 1000 words
+    vectorizer = CountVectorizer(max_features=1000)
+    X_train_bow = vectorizer.fit_transform(X_train_texts)
+    X_test_bow = vectorizer.transform(X_test_texts)
+
+    class NaiveBayesClassifier:
+        def __init__(self):
+            self.class_counts = defaultdict(int)
+            self.word_counts = defaultdict(lambda: defaultdict(int))
+            self.vocab = set()
+
+        def train(self, X, y):
+            # ...
+
+        def predict(self, X):
+            # ...
+
+    # Create Naive Bayes Classifier instance
+    classifier = NaiveBayesClassifier()
+
+    # Train the classifier
+    classifier.train(X_train_raw, y_train)
+
+    # Make predictions on the testing data
+    predictions = classifier.predict(X_test_raw)
+
+    # Evaluate the accuracy of the classifier
+    accuracy = sum(1 for pred, true in zip(predictions, y_test) if pred == true) / len(y_test)
+    print("Accuracy:", accuracy)
+
+    # Compute the confusion matrix
+    conf_matrix = confusion_matrix(y_test, predictions)
+    print("Confusion Matrix:")
+    print(conf_matrix)
+
+    # Convert labels to binary format
+    y_test_bin = label_binarize(y_test, classes=np.unique(y_test))
+
+    # Compute precision, recall, and thresholds for each class
+    precisions = dict()
+    recalls = dict()
+    thresholds = dict()
+    for i, emotion in enumerate(np.unique(y_test)):
+        precision, recall, threshold = precision_recall_curve(y_test_bin[:, i], predictions == emotion, pos_label=True)
+        precisions[emotion] = precision
+        recalls[emotion] = recall
+        thresholds[emotion] = threshold
+
+    # Plot precision-recall curve for each class
+    plt.figure()
+    for i, emotion in enumerate(np.unique(y_test)):
+        if emotion in precisions and emotion in recalls:
+            plt.step(recalls[emotion], precisions[emotion], where='post', label=f'Class {emotion}')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve for the Naive Bayes Classifier')
+    plt.legend()
+    plt.show()
+
+    return predictions, accuracy, conf_matrix
+    #Call the naive_bayes function with the code line 'predictions, accuracy, conf_matrix = naive_bayes()'
+    
 
 
 def decision_tree():
@@ -332,5 +410,6 @@ def decision_tree():
     print(classification_rep)
 
     return predictions, train_losses
+    # Call the decision_tree function with the code line 'predictions, train_losses = decision_tree()'
 
-    return None
+   
