@@ -14,6 +14,8 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve
 from sklearn.preprocessing import label_binarize
+from sklearn.svm import SVC
+
 
 """
 Script contains all the models to and return their predictions or loss in order to evaluate the results in Overall Results Notebook.
@@ -24,6 +26,11 @@ These are the optimal models for each Machine Learning Algorithm, for detailed i
 
 # Multi-Layer-Perceptron
 def mlp():
+    """Multi-Layer Perceptron Algorithm Implementation
+
+    Returns:
+        y_pred: predictions
+    """
 
     # Load training data
     train_data = pd.read_csv("train_data.csv")
@@ -88,11 +95,74 @@ def mlp():
 
 
 def svm():
-    return None
+    """SVM algorithm implementation.
+
+    Returns:
+        y_pred: predictions
+    """
+
+    # Load training data
+    train_data = pd.read_csv("train_data.csv")
+    X_train_raw = train_data["X_train"].tolist()
+    y_train_raw = train_data["y_train"].tolist()
+
+    # Load test data
+    test_data = pd.read_csv("test_data.csv")
+    X_test_raw = test_data["X_test"].tolist()
+    y_test_raw = test_data["y_test"].tolist()
+
+    # Subsets for faster training
+    X_train_subset = X_train_raw[:10000]
+    y_train_subset = y_train_raw[:10000]
+
+    X_test_subset = X_test_raw[:2000]
+    y_test_subset = y_test_raw[:2000]
+
+    # Make the subset a list
+    X_train_subset = [
+        ast.literal_eval(item) if isinstance(item, str) else item
+        for item in X_train_subset
+    ]
+    X_test_subset = [
+        ast.literal_eval(item) if isinstance(item, str) else item
+        for item in X_test_subset
+    ]
+
+    # Subset into a string
+    corpus_train_subset = [" ".join(item) for item in X_train_subset]
+    corpus_test_subset = [" ".join(item) for item in X_test_subset]
+
+    # Initialize the CountVectorizer, limiting max_features to the top 500 words.
+    vectorizer = CountVectorizer(max_features=500)
+
+    # Vectorize the Subset
+    X_train_subset = vectorizer.fit_transform(corpus_train_subset).toarray()
+    X_test_subset = vectorizer.transform(corpus_test_subset).toarray()
+
+    # Encode the taget variables
+    encoder = LabelEncoder()
+    y_train = encoder.fit_transform(y_train_raw)
+    y_test = encoder.fit_transform(y_test_raw)
+
+    y_train_subset = encoder.fit_transform(y_train_subset)
+    y_test_subset = encoder.fit_transform(y_test_subset)
+
+    # Optimized Hyperparameter
+    model = SVC(class_weight="balanced", C=0.01, gamma="scale", kernel="linear")
+    model.fit(X_train_subset, y_train_subset)
+
+    y_pred = model.predict(X_test_subset)
+
+    return y_pred
 
 
 # Logistic Regression
 def logistic_regression():
+    """Logistic Regression Algorithm Implementation
+
+    Returns:
+        y_pred: predictions
+    """
 
     # Load the train and test data (already preprocessed).
     print("Logistic Regression: Loading data")
@@ -139,51 +209,31 @@ def logistic_regression():
     print("Logistic Regression: Making predictions")
     y_pred = logReg.predict(test_bow)
 
-    # Losses
-    loss_model = SGDClassifier(
-        loss="log",
-        learning_rate="constant",
-        eta0=0.01,
-        max_iter=1,
-        warm_start=True,
-        penalty=None,
-    )
-    losses = []
-
-    print("Logistic Regression: Calculating losses")
-    # Train the model for 10 epochs.
-    for _ in range(10):
-        loss_model.partial_fit(X_train, y_train, classes=np.unique(y_train))
-        probabilities = loss_model.predict_proba(X_train)
-        loss = log_loss(y_train, probabilities)
-        losses.append(loss)
-
-    print(
-        f"Accuracy of the Logistic Regression Model: {accuracy_score(y_test_raw, y_pred):.4f}"
-    )
-
-    # Return the predictions and losses.
-    return y_pred, losses
+    return y_pred
 
 
 def naive_bayes():
     # Load training data
     train_data = pd.read_csv("train_data.csv")
-    X_train = train_data['X_train'].tolist()
-    y_train = train_data['y_train'].tolist()
+    X_train = train_data["X_train"].tolist()
+    y_train = train_data["y_train"].tolist()
 
     # Load test data
     test_data = pd.read_csv("test_data.csv")
-    X_test = test_data['X_test'].tolist()
-    y_test = test_data['y_test'].tolist()
+    X_test = test_data["X_test"].tolist()
+    y_test = test_data["y_test"].tolist()
 
     # Tokenization
-    X_train_raw = [ast.literal_eval(item) if isinstance(item, str) else item for item in X_train]
-    X_test_raw = [ast.literal_eval(item) if isinstance(item, str) else item for item in X_test]
+    X_train_raw = [
+        ast.literal_eval(item) if isinstance(item, str) else item for item in X_train
+    ]
+    X_test_raw = [
+        ast.literal_eval(item) if isinstance(item, str) else item for item in X_test
+    ]
 
     # Convert tokenized texts to strings for CountVectorizer
-    X_train_texts = [' '.join(tokens) for tokens in X_train_raw]
-    X_test_texts = [' '.join(tokens) for tokens in X_test_raw]
+    X_train_texts = [" ".join(tokens) for tokens in X_train_raw]
+    X_test_texts = [" ".join(tokens) for tokens in X_test_raw]
 
     # Create CountVectorizer and limit vocabulary to the top 1000 words
     vectorizer = CountVectorizer(max_features=1000)
@@ -198,28 +248,33 @@ def naive_bayes():
 
         def train(self, X, y):
             for i in range(len(X)):
-            tokens = X[i]
-            emotion = y[i]
-            self.class_counts[emotion] += 1
-            for token in tokens:
-                self.word_counts[emotion][token] += 1
-                self.vocab.add(token)
+                tokens = X[i]
+                emotion = y[i]
+                self.class_counts[emotion] += 1
+                for token in tokens:
+                    self.word_counts[emotion][token] += 1
+                    self.vocab.add(token)
 
         def predict(self, X):
             predictions = []
-        for i, tokens in enumerate(X):
-            if i % 100 == 0:
-                print("Processing instance", i+1, "of", len(X))
-            emotion_log_probs = []
-            for emotion in self.class_counts:
-                log_prob = np.log(self.class_counts[emotion] / sum(self.class_counts.values()))
-                denominator = sum(self.word_counts[emotion].values()) + len(self.vocab)
-                log_prob += sum(np.log((self.word_counts[emotion][token] + 1) / denominator) for token in tokens)
-                emotion_log_probs.append(log_prob)
-            max_idx = np.argmax(emotion_log_probs)
-            pred_emotion = list(self.class_counts.keys())[max_idx]
-            predictions.append(pred_emotion)
-        return predictions
+            for i, tokens in enumerate(X):
+                emotion_log_probs = []
+                for emotion in self.class_counts:
+                    log_prob = np.log(
+                        self.class_counts[emotion] / sum(self.class_counts.values())
+                    )
+                    denominator = sum(self.word_counts[emotion].values()) + len(
+                        self.vocab
+                    )
+                    log_prob += sum(
+                        np.log((self.word_counts[emotion][token] + 1) / denominator)
+                        for token in tokens
+                    )
+                    emotion_log_probs.append(log_prob)
+                max_idx = np.argmax(emotion_log_probs)
+                pred_emotion = list(self.class_counts.keys())[max_idx]
+                predictions.append(pred_emotion)
+            return predictions
 
     # Create Naive Bayes Classifier instance
     classifier = NaiveBayesClassifier()
@@ -230,34 +285,32 @@ def naive_bayes():
     # Make predictions on the testing data
     predictions = classifier.predict(X_test_raw)
 
-    # Evaluate the accuracy of the classifier
-    accuracy = sum(1 for pred, true in zip(predictions, y_test) if pred == true) / len(y_test)
-    #print("Accuracy:", accuracy)
-
-
-    return predictions, accuracy
-    #Call the naive_bayes function with the code line 'predictions, accuracy, conf_matrix = naive_bayes()'
-    
+    return predictions
 
 
 def decision_tree():
+
     # Load training data
     train_data = pd.read_csv("train_data.csv")
-    X_train = train_data['X_train'].tolist()
-    y_train = train_data['y_train'].tolist()
+    X_train = train_data["X_train"].tolist()
+    y_train = train_data["y_train"].tolist()
 
     # Load test data
     test_data = pd.read_csv("test_data.csv")
-    X_test = test_data['X_test'].tolist()
-    y_test = test_data['y_test'].tolist()
+    X_test = test_data["X_test"].tolist()
+    y_test = test_data["y_test"].tolist()
 
     # Tokenization
-    X_train_raw = [ast.literal_eval(item) if isinstance(item, str) else item for item in X_train]
-    X_test_raw = [ast.literal_eval(item) if isinstance(item, str) else item for item in X_test]
+    X_train_raw = [
+        ast.literal_eval(item) if isinstance(item, str) else item for item in X_train
+    ]
+    X_test_raw = [
+        ast.literal_eval(item) if isinstance(item, str) else item for item in X_test
+    ]
 
     # Convert tokenized texts to strings for CountVectorizer
-    X_train_texts = [' '.join(tokens) for tokens in X_train_raw]
-    X_test_texts = [' '.join(tokens) for tokens in X_test_raw]
+    X_train_texts = [" ".join(tokens) for tokens in X_train_raw]
+    X_test_texts = [" ".join(tokens) for tokens in X_test_raw]
 
     # Create CountVectorizer and limit vocabulary to the top 1000 words
     vectorizer = CountVectorizer(max_features=1000)
@@ -273,9 +326,6 @@ def decision_tree():
             self.tree = self.build_tree(X, y)
 
         def build_tree(self, X, y, depth=0):
-            print("Depth:", depth)
-            print("X shape:", X.shape)
-            print("y shape:", y.shape)
             # Check for base cases
             if depth == self.max_depth or len(np.unique(y)) == 1:
                 return np.argmax(np.bincount(y))
@@ -288,43 +338,44 @@ def decision_tree():
             for feature_idx in range(num_features):
                 values = np.unique(X[:, feature_idx])
                 for value in values:
-                    left_indices = np.where(X[:, feature_idx] == value)[0].astype(np.int64)
-                    right_indices = np.where(X[:, feature_idx] != value)[0].astype(np.int64)
+                    left_indices = np.where(X[:, feature_idx] == value)[0].astype(
+                        np.int64
+                    )
+                    right_indices = np.where(X[:, feature_idx] != value)[0].astype(
+                        np.int64
+                    )
 
                     left_labels = np.array(y)[left_indices]
                     right_labels = np.array(y)[right_indices]
                     gain = self.information_gain(y, left_labels, right_labels)
 
-
                     if gain > best_gain:
-                    best_gain = gain
-                    best_feature = (feature_idx, value)
+                        best_gain = gain
+                        best_feature = (feature_idx, value)
 
-             if best_feature is None:
-                 return np.argmax(np.bincount(y))
+            if best_feature is None:
+                return np.argmax(np.bincount(y))
 
-             feature_idx, value = best_feature
-             print("Feature index:", feature_idx)
-             print("Value:", value)
-             left_indices = np.where(X[:, feature_idx] == value)[0].astype(np.int64)
-             right_indices = np.where(X[:, feature_idx] != value)[0].astype(int)
-             print("Left indices:", left_indices)
-             print("Right indices:", right_indices)
+            feature_idx, value = best_feature
+            left_indices = np.where(X[:, feature_idx] == value)[0].astype(np.int64)
+            right_indices = np.where(X[:, feature_idx] != value)[0].astype(int)
 
-             left_mask = np.isin(np.arange(X.shape[0]), left_indices)
-             right_mask = np.isin(np.arange(X.shape[0]), right_indices)
+            left_mask = np.isin(np.arange(X.shape[0]), left_indices)
+            right_mask = np.isin(np.arange(X.shape[0]), right_indices)
 
-             left_tree = self.build_tree(X[np.nonzero(left_mask)[0]], y[np.nonzero(left_mask)[0]], depth + 1)
-             right_tree = self.build_tree(X[np.nonzero(right_mask)[0]], y[np.nonzero(right_mask)[0]], depth + 1)
+            left_tree = self.build_tree(
+                X[np.nonzero(left_mask)[0]], y[np.nonzero(left_mask)[0]], depth + 1
+            )
+            right_tree = self.build_tree(
+                X[np.nonzero(right_mask)[0]], y[np.nonzero(right_mask)[0]], depth + 1
+            )
 
-        #left_tree = self.build_tree(X[np.array(left_indices)], y[np.array(left_indices)], depth + 1)
-        #right_tree = self.build_tree(X[np.array(right_indices)], y[np.array(right_indices)], depth + 1)
-
-
-              return {'feature_idx': feature_idx,
-                      'value': value,
-                      'left': left_tree,
-                      'right': right_tree}
+            return {
+                "feature_idx": feature_idx,
+                "value": value,
+                "left": left_tree,
+                "right": right_tree,
+            }
 
         def information_gain(self, parent_labels, left_labels, right_labels):
             parent_entropy = self.calculate_entropy(parent_labels)
@@ -335,7 +386,9 @@ def decision_tree():
             num_left = len(left_labels)
             num_right = len(right_labels)
 
-            weighted_entropy = (num_left / num_parent) * left_entropy + (num_right / num_parent) * right_entropy
+            weighted_entropy = (num_left / num_parent) * left_entropy + (
+                num_right / num_parent
+            ) * right_entropy
 
             return parent_entropy - weighted_entropy
 
@@ -356,13 +409,13 @@ def decision_tree():
 
         def traverse_tree(self, instance, tree):
             if isinstance(tree, dict):
-                feature_idx = tree['feature_idx']
-                value = tree['value']
+                feature_idx = tree["feature_idx"]
+                value = tree["value"]
 
                 if instance[feature_idx] == value:
-                    return self.traverse_tree(instance, tree['left'])
+                    return self.traverse_tree(instance, tree["left"])
                 else:
-                    return self.traverse_tree(instance, tree['right'])
+                    return self.traverse_tree(instance, tree["right"])
             else:
                 return tree
 
@@ -375,34 +428,4 @@ def decision_tree():
     # Make predictions on the testing data
     predictions = classifier.predict(X_test_bow.toarray())
 
-    # Evaluate the accuracy of the classifier
-    accuracy = sum(1 for pred, true in zip(predictions, y_test) if pred == true) / len(y_test)
-    #print("Final Accuracy of the model:", accuracy)
-
-    # Calculate confusion matrix
-    cm = confusion_matrix(y_test, predictions)
-    #print("Confusion Matrix of Decision Tree:")
-    #print(cm)
-
-    # Calculate training loss
-    train_predictions = classifier.predict(X_train_bow.toarray())
-    train_loss = sum(1 for pred, true in zip(train_predictions, y_train) if pred != true) / len(y_train)
-    #print("Training Loss:", train_loss)
-
-    # Plot the training loss curve
-    #train_losses = [1 if pred != true else 0 for pred, true in zip(train_predictions, y_train)]
-    #plt.plot(range(len(train_losses)), train_losses)
-    #plt.xlabel('Iteration')
-    #plt.ylabel('Training Loss')
-    #plt.title('Training Loss Curve for Decision Tree')
-    #plt.show()
-
-    # Display the classification report
-    classification_rep = classification_report(y_test, predictions)
-    #print("Classification Report:")
-    #print(classification_rep)
-
-    return predictions, train_losses
-    # Call the decision_tree function with the code line 'predictions, train_losses = decision_tree()'
-
-   
+    return predictions
